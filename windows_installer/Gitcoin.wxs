@@ -1,0 +1,487 @@
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!-- http://wixtoolset.org/documentation/manual/v3/xsd/wix/product.html -->
+  <Product Id="*" UpgradeCode="88d0500f-1c94-4c5c-81b2-abf3ee241b39"
+          Name="Gitcoin"
+          Version="1.0.0"
+          Manufacturer="Gitcoin"
+          Language="1033">
+    <!-- Only run this installer on Windows 7 or up (or if it's already installed, I guess) -->
+    <!-- <Condition Message="This application is only supported on Windows 7 or higher.">
+      <![CDATA[Installed OR (VersionNT >= 601)]]>
+    </Condition> -->
+    <!-- http://wixtoolset.org/documentation/manual/v3/xsd/wix/package.html -->
+    <Package InstallerVersion="405"
+             Compressed="yes"
+             InstallScope="perMachine"
+             Comments="Windows Installer Package"
+             Platform="x64"/>
+
+    <!-- Overides the defautl install mode. It solves a problem where
+    individual packaged files that have the same version as in pervious
+    installed App version will be deleted if the files a re in use during
+    this upgrade. Unfortunately this causes an ICE 40 warning during linking. -->
+    <Property Id="REINSTALLMODE" Value="emus" />
+    <!-- Overrides the default reboot behavior if files are in use during the upgrade.
+     This way no unpxecpted reboot will happpen.-->
+    <Property Id="REBOOT" Value="ReallySuppress" />
+    
+    <Media Id="1" Cabinet="product.cab" EmbedCab="yes"/>
+
+    <!-- Handle Updates -->
+    <Upgrade Id="88d0500f-1c94-4c5c-81b2-abf3ee241b39">
+      <UpgradeVersion OnlyDetect="no" Property="PREVIOUSFOUND"
+          Minimum="0.0.0" IncludeMinimum="yes"
+          Maximum="1.0.0" IncludeMaximum="no" />
+    </Upgrade>
+
+    <InstallExecuteSequence>
+      <RemoveExistingProducts After="InstallInitialize" />
+    </InstallExecuteSequence>
+
+<UI Id="UserInterface">
+  <Property Id="WixUI_Mode" Value="InstallDir" />
+
+  <TextStyle Id="WixUI_Font_Normal" FaceName="Tahoma" Size="8" />
+  <TextStyle Id="WixUI_Font_Bigger" FaceName="Tahoma" Size="12" />
+  <TextStyle Id="WixUI_Font_Title" FaceName="Tahoma" Size="9" Bold="yes" />
+
+  <Property Id="DefaultUIFont" Value="WixUI_Font_Normal" />
+
+  <DialogRef Id="BrowseDlg" />
+  <DialogRef Id="DiskCostDlg" />
+  <DialogRef Id="ErrorDlg" />
+  <DialogRef Id="FatalError" />
+  <DialogRef Id="FilesInUse" />
+  <DialogRef Id="MsiRMFilesInUse" />
+  <DialogRef Id="PrepareDlg" />
+  <DialogRef Id="ProgressDlg" />
+  <DialogRef Id="ResumeDlg" />
+  <DialogRef Id="UserExit" />
+
+  <Publish Dialog="BrowseDlg" Control="OK" Event="DoAction" Value="WixUIValidatePath" Order="3">1</Publish>
+  <Publish Dialog="BrowseDlg" Control="OK" Event="SpawnDialog" Value="InvalidDirDlg" Order="4"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+
+  <Publish Dialog="ExitDialog" Control="Finish" Event="EndDialog" Value="Return" Order="999">1</Publish>
+
+  <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="InstallDirDlg">NOT Installed</Publish>
+  <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg">Installed AND PATCH</Publish>
+
+  <Publish Dialog="InstallDirDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg">1</Publish>
+  <Publish Dialog="InstallDirDlg" Control="Next" Event="SetTargetPath" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+  <Publish Dialog="InstallDirDlg" Control="Next" Event="DoAction" Value="WixUIValidatePath" Order="2">NOT WIXUI_DONTVALIDATEPATH</Publish>
+  <Publish Dialog="InstallDirDlg" Control="Next" Event="SpawnDialog" Value="InvalidDirDlg" Order="3"><![CDATA[NOT WIXUI_DONTVALIDATEPATH AND WIXUI_INSTALLDIR_VALID<>"1"]]></Publish>
+  <Publish Dialog="InstallDirDlg" Control="Next" Event="NewDialog" Value="VerifyReadyDlg" Order="4">WIXUI_DONTVALIDATEPATH OR WIXUI_INSTALLDIR_VALID="1"</Publish>
+  <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Property="_BrowseProperty" Value="[WIXUI_INSTALLDIR]" Order="1">1</Publish>
+  <Publish Dialog="InstallDirDlg" Control="ChangeFolder" Event="SpawnDialog" Value="BrowseDlg" Order="2">1</Publish>
+
+  <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="InstallDirDlg" Order="1">NOT Installed</Publish>
+  <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="MaintenanceTypeDlg" Order="2">Installed AND NOT PATCH</Publish>
+  <Publish Dialog="VerifyReadyDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="2">Installed AND PATCH</Publish>
+
+  <Publish Dialog="MaintenanceWelcomeDlg" Control="Next" Event="NewDialog" Value="MaintenanceTypeDlg">1</Publish>
+
+  <Publish Dialog="MaintenanceTypeDlg" Control="RepairButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+  <Publish Dialog="MaintenanceTypeDlg" Control="RemoveButton" Event="NewDialog" Value="VerifyReadyDlg">1</Publish>
+  <Publish Dialog="MaintenanceTypeDlg" Control="Back" Event="NewDialog" Value="MaintenanceWelcomeDlg">1</Publish>
+
+  <Property Id="ARPNOMODIFY" Value="1" />
+</UI>
+<Property Id="WIXUI_INSTALLDIR" Value="APPLICATIONROOTDIRECTORY" />
+<UIRef Id="WixUI_Common" />
+
+
+
+
+    <!-- Step 2: Add files and directories -->
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <!-- Installation files to %PROGRAMFILES% -->
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="APPLICATIONROOTDIRECTORY" Name="Gitcoin">
+          <Directory Id="_locales_e035c67e_f6b3_499c_8066_95b3636c7a3d" Name="locales">
+            <Component Id="_locales_am.pak_e76ddfef_4a54_456d_a87f_1c3c7fcdab21" Guid="19f1a365-ca0e-41de-904a-e0b2641d01aa" Win64="yes">
+              <File Name="am.pak" Id="_locales_am.pak_e76ddfef_4a54_456d_a87f_1c3c7fcdab21" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\am.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ar.pak_00f4d902_0370_49e7_a131_7e7da9f76ed0" Guid="bbae9ca5-9aa1-4c07-bee6-7cd633ba0dfc" Win64="yes">
+              <File Name="ar.pak" Id="_locales_ar.pak_00f4d902_0370_49e7_a131_7e7da9f76ed0" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ar.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_bg.pak_2acbfa12_63f5_4840_91c4_086403156356" Guid="86374bad-e093-446b-9c3a-b262711cabef" Win64="yes">
+              <File Name="bg.pak" Id="_locales_bg.pak_2acbfa12_63f5_4840_91c4_086403156356" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\bg.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_bn.pak_80828df5_dfe0_4992_9853_763a3b0ecd52" Guid="2112024b-6961-44af-b3a0-8e932548ccea" Win64="yes">
+              <File Name="bn.pak" Id="_locales_bn.pak_80828df5_dfe0_4992_9853_763a3b0ecd52" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\bn.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ca.pak_04c6434e_043d_4e31_9371_eb69a9326113" Guid="ff5586c7-a63c-427f-a0a3-50ea47b2b549" Win64="yes">
+              <File Name="ca.pak" Id="_locales_ca.pak_04c6434e_043d_4e31_9371_eb69a9326113" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ca.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_cs.pak_140096e7_46f4_4404_a4e6_e9ca65ecc028" Guid="81dc8fbd-69a4-45ce-b08e-13f00db5d68d" Win64="yes">
+              <File Name="cs.pak" Id="_locales_cs.pak_140096e7_46f4_4404_a4e6_e9ca65ecc028" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\cs.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_da.pak_ac2d3694_8fbd_43c3_8681_533ceb87bf27" Guid="38b3bcbd-23ae-417d-bbf4-7d8713175701" Win64="yes">
+              <File Name="da.pak" Id="_locales_da.pak_ac2d3694_8fbd_43c3_8681_533ceb87bf27" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\da.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_de.pak_179b0fef_11fc_4e17_8f86_af3aab142d36" Guid="811d1065-f826-423d-8a7e-18dac85959bb" Win64="yes">
+              <File Name="de.pak" Id="_locales_de.pak_179b0fef_11fc_4e17_8f86_af3aab142d36" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\de.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_el.pak_1de0dc6d_96dc_41b9_8cf8_43e85d03067a" Guid="621fbb65-e727-4e0a-8636-3b6d73c539fb" Win64="yes">
+              <File Name="el.pak" Id="_locales_el.pak_1de0dc6d_96dc_41b9_8cf8_43e85d03067a" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\el.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_en_GB.pak_3ec3cbfa_4a17_492a_a6f1_9882c72e3dde" Guid="997eb46a-8649-44f2-a972-7138a530e30e" Win64="yes">
+              <File Name="en-GB.pak" Id="_locales_en_GB.pak_3ec3cbfa_4a17_492a_a6f1_9882c72e3dde" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\en-GB.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_en_US.pak_f2f2cd13_f8ba_4b31_8bfb_56c5467846ec" Guid="e93ae8e8-7da2-4613-8bed-51a29df0be18" Win64="yes">
+              <File Name="en-US.pak" Id="_locales_en_US.pak_f2f2cd13_f8ba_4b31_8bfb_56c5467846ec" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\en-US.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_es_419.pak_db1894b8_3d6c_4068_9762_9454c82bfc89" Guid="9c27e31a-6f9e-4610-8d80-7706eb0cd590" Win64="yes">
+              <File Name="es-419.pak" Id="_locales_es_419.pak_db1894b8_3d6c_4068_9762_9454c82bfc89" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\es-419.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_es.pak_a97676c4_d8cf_4de3_9b06_3c5d54d458e7" Guid="9b29754b-2145-41cf-96cd-9b408659c3b5" Win64="yes">
+              <File Name="es.pak" Id="_locales_es.pak_a97676c4_d8cf_4de3_9b06_3c5d54d458e7" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\es.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_et.pak_e85672bd_80fa_43c7_bb77_38256e5d98bf" Guid="645b154d-cb3d-413a-ae90-ba6fa3fb97d4" Win64="yes">
+              <File Name="et.pak" Id="_locales_et.pak_e85672bd_80fa_43c7_bb77_38256e5d98bf" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\et.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_fa.pak_64951926_4df1_4531_8206_673dcd8a00d5" Guid="460b03f2-d42d-48bf-ad10-bde687cdc320" Win64="yes">
+              <File Name="fa.pak" Id="_locales_fa.pak_64951926_4df1_4531_8206_673dcd8a00d5" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\fa.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_fi.pak_e5c666c0_d320_45c8_8033_521d7c4f30cc" Guid="443b97f8-2743-4f79-9f16-d6c0dbd3b36f" Win64="yes">
+              <File Name="fi.pak" Id="_locales_fi.pak_e5c666c0_d320_45c8_8033_521d7c4f30cc" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\fi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_fil.pak_88feb82d_f8fc_4a03_9d04_24b38188ed34" Guid="0e68f116-a640-4900-ba00-4531ae0f8895" Win64="yes">
+              <File Name="fil.pak" Id="_locales_fil.pak_88feb82d_f8fc_4a03_9d04_24b38188ed34" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\fil.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_fr.pak_fe33bd97_e218_4979_8d32_da926f68664d" Guid="581bbfc8-c7c4-4d34-b922-0c837c9f6989" Win64="yes">
+              <File Name="fr.pak" Id="_locales_fr.pak_fe33bd97_e218_4979_8d32_da926f68664d" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\fr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_gu.pak_87ded03a_b929_4b3a_a0fe_0dc16d9d720e" Guid="a400bc86-2d3d-4eab-83b4-a0bca5d079d7" Win64="yes">
+              <File Name="gu.pak" Id="_locales_gu.pak_87ded03a_b929_4b3a_a0fe_0dc16d9d720e" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\gu.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_he.pak_39605f44_7196_48f9_9815_c1947658fa4e" Guid="1d75969e-65e3-4905-947e-669484e4c017" Win64="yes">
+              <File Name="he.pak" Id="_locales_he.pak_39605f44_7196_48f9_9815_c1947658fa4e" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\he.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_hi.pak_67aca094_1ae9_45e3_bfa6_6eaa5368f6b5" Guid="a08d9681-14e1-4eff-b70a-5b76b538a468" Win64="yes">
+              <File Name="hi.pak" Id="_locales_hi.pak_67aca094_1ae9_45e3_bfa6_6eaa5368f6b5" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\hi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_hr.pak_25e8a16c_f336_49ab_82e8_4be0590e36f8" Guid="498e31db-c830-42f4-b396-f3eb1d6ab0e3" Win64="yes">
+              <File Name="hr.pak" Id="_locales_hr.pak_25e8a16c_f336_49ab_82e8_4be0590e36f8" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\hr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_hu.pak_c73b095f_08e6_442e_9600_c48ce4e4f0f2" Guid="d2a62b8c-3399-4375-9206-f4f8f7b51cd4" Win64="yes">
+              <File Name="hu.pak" Id="_locales_hu.pak_c73b095f_08e6_442e_9600_c48ce4e4f0f2" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\hu.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_id.pak_595f1ffc_5ccc_4cc0_9bd8_a7458cb6860e" Guid="27143bce-8671-47a6-ad32-d5fe8e73d996" Win64="yes">
+              <File Name="id.pak" Id="_locales_id.pak_595f1ffc_5ccc_4cc0_9bd8_a7458cb6860e" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\id.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_it.pak_9ccd6914_40e3_41f5_90d6_9701ff45cf34" Guid="ac1f773c-f243-4b49-9463-cc5a84ef3049" Win64="yes">
+              <File Name="it.pak" Id="_locales_it.pak_9ccd6914_40e3_41f5_90d6_9701ff45cf34" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\it.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ja.pak_bdc61906_acef_4da6_a689_f3302c25bdfd" Guid="01f80658-1b96-468f-aadc-b48c9ae82f43" Win64="yes">
+              <File Name="ja.pak" Id="_locales_ja.pak_bdc61906_acef_4da6_a689_f3302c25bdfd" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ja.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_kn.pak_ae043397_9e70_42f2_8f5f_095fdc09b9b9" Guid="1a66fcc4-5853-431d-be4c-30408de41c40" Win64="yes">
+              <File Name="kn.pak" Id="_locales_kn.pak_ae043397_9e70_42f2_8f5f_095fdc09b9b9" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\kn.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ko.pak_1c831093_02d6_464c_abe2_13a6b1095ffb" Guid="afc8bb1e-d48f-41b0-9a69-0937ed61ffc5" Win64="yes">
+              <File Name="ko.pak" Id="_locales_ko.pak_1c831093_02d6_464c_abe2_13a6b1095ffb" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ko.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_lt.pak_59fc9816_517b_4972_af80_b7d297d2fd98" Guid="92622359-324e-4036-9fca-3c2b6f11209e" Win64="yes">
+              <File Name="lt.pak" Id="_locales_lt.pak_59fc9816_517b_4972_af80_b7d297d2fd98" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\lt.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_lv.pak_0bd9a77e_83d9_4c11_ad4e_93e76cf57fb9" Guid="c64d7a27-583d-4f56-8602-59f8a3f0806b" Win64="yes">
+              <File Name="lv.pak" Id="_locales_lv.pak_0bd9a77e_83d9_4c11_ad4e_93e76cf57fb9" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\lv.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ml.pak_4058922d_04a4_4520_89ec_79ebfc58e7e5" Guid="b26a3d9d-4559-4499-a473-77bdcdcbfe3f" Win64="yes">
+              <File Name="ml.pak" Id="_locales_ml.pak_4058922d_04a4_4520_89ec_79ebfc58e7e5" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ml.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_mr.pak_2045e021_d593_485f_a2e3_2d88e8787718" Guid="6d20f141-885f-40ad-8ebe-24f92ca5e911" Win64="yes">
+              <File Name="mr.pak" Id="_locales_mr.pak_2045e021_d593_485f_a2e3_2d88e8787718" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\mr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ms.pak_e042ee48_d6a3_4d16_8937_8e880833ce52" Guid="e6645010-98a1-4f96-a5a6-8ec58c43466c" Win64="yes">
+              <File Name="ms.pak" Id="_locales_ms.pak_e042ee48_d6a3_4d16_8937_8e880833ce52" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ms.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_nb.pak_6191f8c0_839e_4562_a507_e78aeeaeef06" Guid="d9f91e5f-aeb9-46cf-9f7e-df22fab45c8a" Win64="yes">
+              <File Name="nb.pak" Id="_locales_nb.pak_6191f8c0_839e_4562_a507_e78aeeaeef06" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\nb.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_nl.pak_7135ea29_49d8_4480_aedc_2919403f580b" Guid="513b8a3e-6990-480f-a7b7-ebc1f93b929a" Win64="yes">
+              <File Name="nl.pak" Id="_locales_nl.pak_7135ea29_49d8_4480_aedc_2919403f580b" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\nl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_pl.pak_381339ba_f504_44d9_adae_10ec67cf966d" Guid="69af12ec-f02c-466f-a1dc-a74c70f5c88b" Win64="yes">
+              <File Name="pl.pak" Id="_locales_pl.pak_381339ba_f504_44d9_adae_10ec67cf966d" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\pl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_pt_BR.pak_7162ee92_0d0d_44cb_89a4_0e17bd6e27cc" Guid="6025ae71-a873-4396-a406-60ea384da679" Win64="yes">
+              <File Name="pt-BR.pak" Id="_locales_pt_BR.pak_7162ee92_0d0d_44cb_89a4_0e17bd6e27cc" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\pt-BR.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_pt_PT.pak_cf095080_be0b_48bf_8366_c8e9e16d314b" Guid="28d1b984-4360-4e24-b71f-a4d100e36922" Win64="yes">
+              <File Name="pt-PT.pak" Id="_locales_pt_PT.pak_cf095080_be0b_48bf_8366_c8e9e16d314b" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\pt-PT.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ro.pak_282841ac_57a4_44ca_a5a7_ecc289cfd4d2" Guid="8cb3b31e-3ae8-428f-85de-1e83624fbebc" Win64="yes">
+              <File Name="ro.pak" Id="_locales_ro.pak_282841ac_57a4_44ca_a5a7_ecc289cfd4d2" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ro.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ru.pak_116feb6f_b06a_48b1_ba3a_4bdfa2c0637c" Guid="df24708e-068d-404a-994b-23f5454fdc96" Win64="yes">
+              <File Name="ru.pak" Id="_locales_ru.pak_116feb6f_b06a_48b1_ba3a_4bdfa2c0637c" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ru.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_sk.pak_0c766705_c4b0_4a66_8ca5_6572191e1239" Guid="e39eff4d-5779-4c75-9276-0cd84b9b9339" Win64="yes">
+              <File Name="sk.pak" Id="_locales_sk.pak_0c766705_c4b0_4a66_8ca5_6572191e1239" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\sk.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_sl.pak_df7e50b4_0355_4247_9776_41cccc7d369e" Guid="9eaf3678-325c-40d7-9b22-3575e8cc405e" Win64="yes">
+              <File Name="sl.pak" Id="_locales_sl.pak_df7e50b4_0355_4247_9776_41cccc7d369e" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\sl.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_sr.pak_59d1f9e8_b70c_4833_8462_bebe5811aa6d" Guid="ded255ab-ed50-4fef-8e78-96ffe788e2ff" Win64="yes">
+              <File Name="sr.pak" Id="_locales_sr.pak_59d1f9e8_b70c_4833_8462_bebe5811aa6d" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\sr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_sv.pak_19ae6a20_95fd_4637_933d_b47e3298d0d5" Guid="8b7494d8-a772-4b35-8566-568d49dbabe3" Win64="yes">
+              <File Name="sv.pak" Id="_locales_sv.pak_19ae6a20_95fd_4637_933d_b47e3298d0d5" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\sv.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_sw.pak_3455d1cd_974f_46e5_8f8b_28274e7a543f" Guid="d47bb7c1-30e8-42ba-bc7a-e01823acce8e" Win64="yes">
+              <File Name="sw.pak" Id="_locales_sw.pak_3455d1cd_974f_46e5_8f8b_28274e7a543f" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\sw.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_ta.pak_d98df812_8d17_4cec_bcda_8d278ab13beb" Guid="36ebf366-b8d8-4421-a06f-ca1bd4f033e7" Win64="yes">
+              <File Name="ta.pak" Id="_locales_ta.pak_d98df812_8d17_4cec_bcda_8d278ab13beb" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\ta.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_te.pak_23e3fedc_0387_45fa_8139_d9be4784edc4" Guid="f5e04a1c-bf24-4823-b6c4-bb67df618eb6" Win64="yes">
+              <File Name="te.pak" Id="_locales_te.pak_23e3fedc_0387_45fa_8139_d9be4784edc4" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\te.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_th.pak_37f85d1f_f298_4dd2_adb0_9e5ae7609de9" Guid="ac45d748-d618-4776-b81f-617ff30e0e7d" Win64="yes">
+              <File Name="th.pak" Id="_locales_th.pak_37f85d1f_f298_4dd2_adb0_9e5ae7609de9" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\th.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_tr.pak_161b942c_3af3_4874_94a7_feed2f08fb81" Guid="e685bd21-d26c-475d-ae3f-f8cc76caaed3" Win64="yes">
+              <File Name="tr.pak" Id="_locales_tr.pak_161b942c_3af3_4874_94a7_feed2f08fb81" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\tr.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_uk.pak_4a7660a3_9b49_42d7_a943_c049314fb3ad" Guid="85151eb9-8ecc-4056-9ffa-cf509ef93062" Win64="yes">
+              <File Name="uk.pak" Id="_locales_uk.pak_4a7660a3_9b49_42d7_a943_c049314fb3ad" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\uk.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_vi.pak_19732a8d_0c90_4932_97ec_11568eff4854" Guid="eb59d412-5717-4fae-a7e0-d5c8bd7de576" Win64="yes">
+              <File Name="vi.pak" Id="_locales_vi.pak_19732a8d_0c90_4932_97ec_11568eff4854" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\vi.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_zh_CN.pak_019f4036_252b_47a1_aab5_34869e2329e3" Guid="d8452586-3390-41c4-a861-4aec571a9f25" Win64="yes">
+              <File Name="zh-CN.pak" Id="_locales_zh_CN.pak_019f4036_252b_47a1_aab5_34869e2329e3" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\zh-CN.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_locales_zh_TW.pak_aaa43ed4_d740_47e8_9d10_b31936983f45" Guid="fa242048-f4de-4f08-8dd9-cdcf3e3c3d80" Win64="yes">
+              <File Name="zh-TW.pak" Id="_locales_zh_TW.pak_aaa43ed4_d740_47e8_9d10_b31936983f45" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\locales\zh-TW.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+          </Directory>
+          <Directory Id="_resources_9e6b07e3_a646_4878_8971_697de8f10018" Name="resources">
+            <Directory Id="_resources_app_cf68db7d_7339_4472_9a8f_bee153414770" Name="app">
+              <Directory Id="_resources_app_Icon_dde012db_cedc_4823_b636_c61273510b1a" Name="Icon">
+                <Component Id="_resources_app_Icon_Icon.icns_890ba23d_777f_422e_90f3_bef57188f87f" Guid="b4921704-17d7-4614-9c06-a95b64a79db6" Win64="yes">
+                  <File Name="Icon.icns" Id="_resources_app_Icon_Icon.icns_890ba23d_777f_422e_90f3_bef57188f87f" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\Icon\Icon.icns" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+                </Component>
+              </Directory>
+              <Directory Id="_resources_app_node_modules_81734b3b_665a_42f6_9262_1370ce41bec3" Name="node_modules">
+                <Directory Id="__electron_c41f71ef_d2ba_4741_a749_f651455f4789" Name="@electron">
+
+                </Directory>
+                <Directory Id="__sindresorhus_42ab27db_a9c5_46f7_99e3_cedd4d67ed7a" Name="@sindresorhus">
+
+                </Directory>
+                <Directory Id="__szmarczak_fde049b6_d741_42f3_9a7d_56f74f0ddf97" Name="@szmarczak">
+
+                </Directory>
+                <Directory Id="_resources_app_node_modules__types_9fa50736_62f2_424f_9ac9_b440595c07a7" Name="@types">
+
+                </Directory>
+              </Directory>              <Component Id="_resources_app_.gitignore_564b3a4e_0cba_4b53_82b9_2b4efabf98ae" Guid="9ae8b20e-a593-46ef-8a9e-ccf8a04617ba" Win64="yes">
+                <File Name=".gitignore" Id="_resources_app_.gitignore_564b3a4e_0cba_4b53_82b9_2b4efabf98ae" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\.gitignore" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_LICENSE.md_9909ccd5_61c9_429c_9ba6_acc28ef80715" Guid="fb25d866-1693-4056-a916-f76d25b20a70" Win64="yes">
+                <File Name="LICENSE.md" Id="_resources_app_LICENSE.md_9909ccd5_61c9_429c_9ba6_acc28ef80715" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\LICENSE.md" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_README.md_73260aae_34a0_4c95_a283_5e6986377b46" Guid="108dd94a-6cd9-4c0d-8650-c15b7639f5c8" Win64="yes">
+                <File Name="README.md" Id="_resources_app_README.md_73260aae_34a0_4c95_a283_5e6986377b46" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\README.md" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_buildOSX.sh_9ebbf13a_394e_4cff_a8e6_792f1ee867a7" Guid="abc31afc-fa93-42b3-840c-f9ff1f710344" Win64="yes">
+                <File Name="buildOSX.sh" Id="_resources_app_buildOSX.sh_9ebbf13a_394e_4cff_a8e6_792f1ee867a7" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\buildOSX.sh" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_buildWIN32.sh_4f457bc7_97ce_4ba4_b1d9_138652572a34" Guid="98acd8b7-b4bc-4350-81d9-f4aad8debafc" Win64="yes">
+                <File Name="buildWIN32.sh" Id="_resources_app_buildWIN32.sh_4f457bc7_97ce_4ba4_b1d9_138652572a34" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\buildWIN32.sh" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_buildlinux.sh_9fa876f1_46a9_47ed_a003_493fd62394f7" Guid="eac0ed58-f0e8-4c48-8c56-129c4e79b6da" Win64="yes">
+                <File Name="buildlinux.sh" Id="_resources_app_buildlinux.sh_9fa876f1_46a9_47ed_a003_493fd62394f7" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\buildlinux.sh" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_index.html_6992b34c_210f_410a_8adb_4511bf58a8f2" Guid="8f5637b3-6ea2-4322-ac18-aa69d43d9c05" Win64="yes">
+                <File Name="index.html" Id="_resources_app_index.html_6992b34c_210f_410a_8adb_4511bf58a8f2" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\index.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_main.js_b68d9931_9d4f_4a1f_8e65_e9f33744adb4" Guid="e3d58a16-f482-4fb5-8f18-efd72469deab" Win64="yes">
+                <File Name="main.js" Id="_resources_app_main.js_b68d9931_9d4f_4a1f_8e65_e9f33744adb4" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\main.js" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_package_lock.json_b65d3bb0_4cf9_4a1e_a5d0_4b2b2a317f81" Guid="1e2cb92c-34fa-4b2b-9609-e2ccaa12934c" Win64="yes">
+                <File Name="package-lock.json" Id="_resources_app_package_lock.json_b65d3bb0_4cf9_4a1e_a5d0_4b2b2a317f81" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\package-lock.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_package.json_7cd515bf_0d0d_426e_8b05_db55717424e5" Guid="e59c8ce3-92c2-4e66-b62d-76651e616341" Win64="yes">
+                <File Name="package.json" Id="_resources_app_package.json_7cd515bf_0d0d_426e_8b05_db55717424e5" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\package.json" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_preload.js_cd277c72_a245_4ff7_b64b_d6f5b2cb8237" Guid="461e7432-342d-4786-a486-599a2e3a4735" Win64="yes">
+                <File Name="preload.js" Id="_resources_app_preload.js_cd277c72_a245_4ff7_b64b_d6f5b2cb8237" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\preload.js" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+              <Component Id="_resources_app_renderer.js_d239ea5e_9b10_4d52_89e6_eb39e11f226a" Guid="5c562335-fd72-4353-930f-e46305c1666c" Win64="yes">
+                <File Name="renderer.js" Id="_resources_app_renderer.js_d239ea5e_9b10_4d52_89e6_eb39e11f226a" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources\app\renderer.js" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+              </Component>
+            </Directory>
+          </Directory>
+          <Directory Id="_swiftshader_a7ff6255_12b6_490a_b487_e4fdeb5ac120" Name="swiftshader">
+            <Component Id="_swiftshader_libEGL.dll_0327c7fb_2317_46a2_9d52_2f7f50fe7d60" Guid="a9aa995d-d5c7-4f66-8e6d-43e19b82f172" Win64="yes">
+              <File Name="libEGL.dll" Id="_swiftshader_libEGL.dll_0327c7fb_2317_46a2_9d52_2f7f50fe7d60" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\swiftshader\libEGL.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+            <Component Id="_swiftshader_libGLESv2.dll_45753f5c_5e2d_42cd_b890_b3ac25ca7171" Guid="5cc13f06-f83d-4112-9efb-12ee6ee8b57a" Win64="yes">
+              <File Name="libGLESv2.dll" Id="_swiftshader_libGLESv2.dll_45753f5c_5e2d_42cd_b890_b3ac25ca7171" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\swiftshader\libGLESv2.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+            </Component>
+          </Directory>          <Component Id="_LICENSE_6083156d_00d0_41ff_a53f_2d56ac3ef299" Guid="3c67bf1d-e4f8-4876-b834-ab3220298de3" Win64="yes">
+            <File Name="LICENSE" Id="_LICENSE_6083156d_00d0_41ff_a53f_2d56ac3ef299" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\LICENSE" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_LICENSES.chromium.html_3c1f60db_1937_474b_8ef6_0d773a3340b1" Guid="4d892269-9b65-4035-9538-a3c9c320c892" Win64="yes">
+            <File Name="LICENSES.chromium.html" Id="_LICENSES.chromium.html_3c1f60db_1937_474b_8ef6_0d773a3340b1" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\LICENSES.chromium.html" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_chrome_100_percent.pak_a30a23c5_da43_4549_b612_bb0866148078" Guid="b6fff2be-98f8-43b8-8ab6-ea88d5cb61d3" Win64="yes">
+            <File Name="chrome_100_percent.pak" Id="_chrome_100_percent.pak_a30a23c5_da43_4549_b612_bb0866148078" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\chrome_100_percent.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_chrome_200_percent.pak_752b75a1_1411_4afb_804f_ebf1c189b699" Guid="628eb861-e1a0-472d-970f-121113947d70" Win64="yes">
+            <File Name="chrome_200_percent.pak" Id="_chrome_200_percent.pak_752b75a1_1411_4afb_804f_ebf1c189b699" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\chrome_200_percent.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_d3dcompiler_47.dll_030c1666_3e43_4b37_9443_42fa8d0d11c4" Guid="68320b88-06bc-4793-adff-f73517a33a54" Win64="yes">
+            <File Name="d3dcompiler_47.dll" Id="_d3dcompiler_47.dll_030c1666_3e43_4b37_9443_42fa8d0d11c4" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\d3dcompiler_47.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_ffmpeg.dll_a98f2af0_99c3_4267_b4c1_9da5bf8d1910" Guid="d4a32291-19fa-4e79-9110-5fd0bc043270" Win64="yes">
+            <File Name="ffmpeg.dll" Id="_ffmpeg.dll_a98f2af0_99c3_4267_b4c1_9da5bf8d1910" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\ffmpeg.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_gitcoin.exe_e1bee485_ee50_42d1_b32f_225fc2da47d6" Guid="a22e8115-60de-4016-af73-15ddd6ac67ae" Win64="yes">
+            <File Name="gitcoin.exe" Id="_gitcoin.exe_e1bee485_ee50_42d1_b32f_225fc2da47d6" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\gitcoin.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_icudtl.dat_1e3134f1_d843_4f3b_ad7e_5e794d1f6eab" Guid="2ba6e5bb-caaf-467c-b97e-19d4d998252d" Win64="yes">
+            <File Name="icudtl.dat" Id="_icudtl.dat_1e3134f1_d843_4f3b_ad7e_5e794d1f6eab" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\icudtl.dat" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_libEGL.dll_dc6cfac4_2645_4164_a0a4_16b51e4d7650" Guid="08b65e95-f809-4dce-9e7b-81304acdd5ed" Win64="yes">
+            <File Name="libEGL.dll" Id="_libEGL.dll_dc6cfac4_2645_4164_a0a4_16b51e4d7650" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\libEGL.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_libGLESv2.dll_e7ee5825_795c_4111_8389_6cde12906a6f" Guid="0281f7ad-e0c9-4b42-90a1-fb63d6d87233" Win64="yes">
+            <File Name="libGLESv2.dll" Id="_libGLESv2.dll_e7ee5825_795c_4111_8389_6cde12906a6f" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\libGLESv2.dll" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_natives_blob.bin_672065b5_497a_4929_a4fb_80d067cb006f" Guid="40e06b2e-8466-4e98-bd72-d8bba719d4df" Win64="yes">
+            <File Name="natives_blob.bin" Id="_natives_blob.bin_672065b5_497a_4929_a4fb_80d067cb006f" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\natives_blob.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_resources.pak_66a9b97d_2c30_48df_9233_1f15c69933fd" Guid="abe31a28-12a9-4d77-aeb5-5adafa37f35f" Win64="yes">
+            <File Name="resources.pak" Id="_resources.pak_66a9b97d_2c30_48df_9233_1f15c69933fd" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\resources.pak" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_snapshot_blob.bin_8c4a9d6c_4bfd_47f9_93e7_c27b9fd413b7" Guid="8b8c708c-eea2-4c6e-95d5-aa4a387cf67e" Win64="yes">
+            <File Name="snapshot_blob.bin" Id="_snapshot_blob.bin_8c4a9d6c_4bfd_47f9_93e7_c27b9fd413b7" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\snapshot_blob.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_v8_context_snapshot.bin_e1035ea9_c7fa_4e24_b198_74f4d460101a" Guid="18e6e9fc-1469-49e2-9c4f-df7f3b9b1634" Win64="yes">
+            <File Name="v8_context_snapshot.bin" Id="_v8_context_snapshot.bin_e1035ea9_c7fa_4e24_b198_74f4d460101a" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\v8_context_snapshot.bin" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+          <Component Id="_version_7a2a8875_a208_4963_af41_0a4c7516caae" Guid="88723f2e-8189-4565-b7ed-542472460f07" Win64="yes">
+            <File Name="version" Id="_version_7a2a8875_a208_4963_af41_0a4c7516caae" Source="C:\Users\rachi\desktop-app\gitcoin-win32-x64\version" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64"/>
+          </Component>
+        </Directory>
+      </Directory>
+      <!-- Start Menu -->
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="Gitcoin"/>
+      </Directory>
+    </Directory>
+
+    <!-- Step 3: Add app to Start Menu -->
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="b8633f7b-ce0f-421b-94d7-ec6b7a5519c0" Win64='yes'>
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="Gitcoin"
+                  Description="Gitcoin"
+                  Target="[APPLICATIONROOTDIRECTORY]Gitcoin.exe"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY">
+          <ShortcutProperty Key="System.AppUserModel.ID" Value="com.squirrel.Gitcoin.Gitcoin" />
+        </Shortcut>
+        <RemoveFolder Id="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU"
+                       Key="Software\Microsoft\Gitcoin"
+                       Name="installed"
+                       Type="integer"
+                       Value="1"
+                       KeyPath="yes"/>
+      </Component>
+    </DirectoryRef>
+
+    <!-- Step 4: Tell WiX to install the files -->
+    <Feature Id="MainApplication" Title="Main Application" Level="1">
+      <ComponentRef Id="_locales_am.pak_e76ddfef_4a54_456d_a87f_1c3c7fcdab21" />
+      <ComponentRef Id="_locales_ar.pak_00f4d902_0370_49e7_a131_7e7da9f76ed0" />
+      <ComponentRef Id="_locales_bg.pak_2acbfa12_63f5_4840_91c4_086403156356" />
+      <ComponentRef Id="_locales_bn.pak_80828df5_dfe0_4992_9853_763a3b0ecd52" />
+      <ComponentRef Id="_locales_ca.pak_04c6434e_043d_4e31_9371_eb69a9326113" />
+      <ComponentRef Id="_locales_cs.pak_140096e7_46f4_4404_a4e6_e9ca65ecc028" />
+      <ComponentRef Id="_locales_da.pak_ac2d3694_8fbd_43c3_8681_533ceb87bf27" />
+      <ComponentRef Id="_locales_de.pak_179b0fef_11fc_4e17_8f86_af3aab142d36" />
+      <ComponentRef Id="_locales_el.pak_1de0dc6d_96dc_41b9_8cf8_43e85d03067a" />
+      <ComponentRef Id="_locales_en_GB.pak_3ec3cbfa_4a17_492a_a6f1_9882c72e3dde" />
+      <ComponentRef Id="_locales_en_US.pak_f2f2cd13_f8ba_4b31_8bfb_56c5467846ec" />
+      <ComponentRef Id="_locales_es_419.pak_db1894b8_3d6c_4068_9762_9454c82bfc89" />
+      <ComponentRef Id="_locales_es.pak_a97676c4_d8cf_4de3_9b06_3c5d54d458e7" />
+      <ComponentRef Id="_locales_et.pak_e85672bd_80fa_43c7_bb77_38256e5d98bf" />
+      <ComponentRef Id="_locales_fa.pak_64951926_4df1_4531_8206_673dcd8a00d5" />
+      <ComponentRef Id="_locales_fi.pak_e5c666c0_d320_45c8_8033_521d7c4f30cc" />
+      <ComponentRef Id="_locales_fil.pak_88feb82d_f8fc_4a03_9d04_24b38188ed34" />
+      <ComponentRef Id="_locales_fr.pak_fe33bd97_e218_4979_8d32_da926f68664d" />
+      <ComponentRef Id="_locales_gu.pak_87ded03a_b929_4b3a_a0fe_0dc16d9d720e" />
+      <ComponentRef Id="_locales_he.pak_39605f44_7196_48f9_9815_c1947658fa4e" />
+      <ComponentRef Id="_locales_hi.pak_67aca094_1ae9_45e3_bfa6_6eaa5368f6b5" />
+      <ComponentRef Id="_locales_hr.pak_25e8a16c_f336_49ab_82e8_4be0590e36f8" />
+      <ComponentRef Id="_locales_hu.pak_c73b095f_08e6_442e_9600_c48ce4e4f0f2" />
+      <ComponentRef Id="_locales_id.pak_595f1ffc_5ccc_4cc0_9bd8_a7458cb6860e" />
+      <ComponentRef Id="_locales_it.pak_9ccd6914_40e3_41f5_90d6_9701ff45cf34" />
+      <ComponentRef Id="_locales_ja.pak_bdc61906_acef_4da6_a689_f3302c25bdfd" />
+      <ComponentRef Id="_locales_kn.pak_ae043397_9e70_42f2_8f5f_095fdc09b9b9" />
+      <ComponentRef Id="_locales_ko.pak_1c831093_02d6_464c_abe2_13a6b1095ffb" />
+      <ComponentRef Id="_locales_lt.pak_59fc9816_517b_4972_af80_b7d297d2fd98" />
+      <ComponentRef Id="_locales_lv.pak_0bd9a77e_83d9_4c11_ad4e_93e76cf57fb9" />
+      <ComponentRef Id="_locales_ml.pak_4058922d_04a4_4520_89ec_79ebfc58e7e5" />
+      <ComponentRef Id="_locales_mr.pak_2045e021_d593_485f_a2e3_2d88e8787718" />
+      <ComponentRef Id="_locales_ms.pak_e042ee48_d6a3_4d16_8937_8e880833ce52" />
+      <ComponentRef Id="_locales_nb.pak_6191f8c0_839e_4562_a507_e78aeeaeef06" />
+      <ComponentRef Id="_locales_nl.pak_7135ea29_49d8_4480_aedc_2919403f580b" />
+      <ComponentRef Id="_locales_pl.pak_381339ba_f504_44d9_adae_10ec67cf966d" />
+      <ComponentRef Id="_locales_pt_BR.pak_7162ee92_0d0d_44cb_89a4_0e17bd6e27cc" />
+      <ComponentRef Id="_locales_pt_PT.pak_cf095080_be0b_48bf_8366_c8e9e16d314b" />
+      <ComponentRef Id="_locales_ro.pak_282841ac_57a4_44ca_a5a7_ecc289cfd4d2" />
+      <ComponentRef Id="_locales_ru.pak_116feb6f_b06a_48b1_ba3a_4bdfa2c0637c" />
+      <ComponentRef Id="_locales_sk.pak_0c766705_c4b0_4a66_8ca5_6572191e1239" />
+      <ComponentRef Id="_locales_sl.pak_df7e50b4_0355_4247_9776_41cccc7d369e" />
+      <ComponentRef Id="_locales_sr.pak_59d1f9e8_b70c_4833_8462_bebe5811aa6d" />
+      <ComponentRef Id="_locales_sv.pak_19ae6a20_95fd_4637_933d_b47e3298d0d5" />
+      <ComponentRef Id="_locales_sw.pak_3455d1cd_974f_46e5_8f8b_28274e7a543f" />
+      <ComponentRef Id="_locales_ta.pak_d98df812_8d17_4cec_bcda_8d278ab13beb" />
+      <ComponentRef Id="_locales_te.pak_23e3fedc_0387_45fa_8139_d9be4784edc4" />
+      <ComponentRef Id="_locales_th.pak_37f85d1f_f298_4dd2_adb0_9e5ae7609de9" />
+      <ComponentRef Id="_locales_tr.pak_161b942c_3af3_4874_94a7_feed2f08fb81" />
+      <ComponentRef Id="_locales_uk.pak_4a7660a3_9b49_42d7_a943_c049314fb3ad" />
+      <ComponentRef Id="_locales_vi.pak_19732a8d_0c90_4932_97ec_11568eff4854" />
+      <ComponentRef Id="_locales_zh_CN.pak_019f4036_252b_47a1_aab5_34869e2329e3" />
+      <ComponentRef Id="_locales_zh_TW.pak_aaa43ed4_d740_47e8_9d10_b31936983f45" />
+      <ComponentRef Id="_resources_app_Icon_Icon.icns_890ba23d_777f_422e_90f3_bef57188f87f" />
+      <ComponentRef Id="_resources_app_.gitignore_564b3a4e_0cba_4b53_82b9_2b4efabf98ae" />
+      <ComponentRef Id="_resources_app_LICENSE.md_9909ccd5_61c9_429c_9ba6_acc28ef80715" />
+      <ComponentRef Id="_resources_app_README.md_73260aae_34a0_4c95_a283_5e6986377b46" />
+      <ComponentRef Id="_resources_app_buildOSX.sh_9ebbf13a_394e_4cff_a8e6_792f1ee867a7" />
+      <ComponentRef Id="_resources_app_buildWIN32.sh_4f457bc7_97ce_4ba4_b1d9_138652572a34" />
+      <ComponentRef Id="_resources_app_buildlinux.sh_9fa876f1_46a9_47ed_a003_493fd62394f7" />
+      <ComponentRef Id="_resources_app_index.html_6992b34c_210f_410a_8adb_4511bf58a8f2" />
+      <ComponentRef Id="_resources_app_main.js_b68d9931_9d4f_4a1f_8e65_e9f33744adb4" />
+      <ComponentRef Id="_resources_app_package_lock.json_b65d3bb0_4cf9_4a1e_a5d0_4b2b2a317f81" />
+      <ComponentRef Id="_resources_app_package.json_7cd515bf_0d0d_426e_8b05_db55717424e5" />
+      <ComponentRef Id="_resources_app_preload.js_cd277c72_a245_4ff7_b64b_d6f5b2cb8237" />
+      <ComponentRef Id="_resources_app_renderer.js_d239ea5e_9b10_4d52_89e6_eb39e11f226a" />
+      <ComponentRef Id="_swiftshader_libEGL.dll_0327c7fb_2317_46a2_9d52_2f7f50fe7d60" />
+      <ComponentRef Id="_swiftshader_libGLESv2.dll_45753f5c_5e2d_42cd_b890_b3ac25ca7171" />
+      <ComponentRef Id="_LICENSE_6083156d_00d0_41ff_a53f_2d56ac3ef299" />
+      <ComponentRef Id="_LICENSES.chromium.html_3c1f60db_1937_474b_8ef6_0d773a3340b1" />
+      <ComponentRef Id="_chrome_100_percent.pak_a30a23c5_da43_4549_b612_bb0866148078" />
+      <ComponentRef Id="_chrome_200_percent.pak_752b75a1_1411_4afb_804f_ebf1c189b699" />
+      <ComponentRef Id="_d3dcompiler_47.dll_030c1666_3e43_4b37_9443_42fa8d0d11c4" />
+      <ComponentRef Id="_ffmpeg.dll_a98f2af0_99c3_4267_b4c1_9da5bf8d1910" />
+      <ComponentRef Id="_gitcoin.exe_e1bee485_ee50_42d1_b32f_225fc2da47d6" />
+      <ComponentRef Id="_icudtl.dat_1e3134f1_d843_4f3b_ad7e_5e794d1f6eab" />
+      <ComponentRef Id="_libEGL.dll_dc6cfac4_2645_4164_a0a4_16b51e4d7650" />
+      <ComponentRef Id="_libGLESv2.dll_e7ee5825_795c_4111_8389_6cde12906a6f" />
+      <ComponentRef Id="_natives_blob.bin_672065b5_497a_4929_a4fb_80d067cb006f" />
+      <ComponentRef Id="_resources.pak_66a9b97d_2c30_48df_9233_1f15c69933fd" />
+      <ComponentRef Id="_snapshot_blob.bin_8c4a9d6c_4bfd_47f9_93e7_c27b9fd413b7" />
+      <ComponentRef Id="_v8_context_snapshot.bin_e1035ea9_c7fa_4e24_b198_74f4d460101a" />
+      <ComponentRef Id="_version_7a2a8875_a208_4963_af41_0a4c7516caae" />
+      <ComponentRef Id="ApplicationShortcut" />
+    </Feature>
+  </Product>
+</Wix>

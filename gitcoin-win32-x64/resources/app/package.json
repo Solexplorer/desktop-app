@@ -1,0 +1,23 @@
+{
+  "name": "gitcoin-desktop",
+  "version": "1.0.0",
+  "description": "A Gitcoin Desktop app",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "repository": "https://github.com/gitcoinco/desktop-app",
+  "keywords": [
+    "Gitcoin",
+    "Desktop",
+    "Chat",
+    "Ethereum",
+    "Desktop"
+  ],
+  "author": "Gitcoin",
+  "license": "CC0-1.0",
+  "devDependencies": {
+    "electron": "^7.1.7",
+    "electron-packager": "^14.1.1"
+  }
+}
